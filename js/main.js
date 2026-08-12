@@ -316,6 +316,43 @@ function frame(now) {
     requestAnimationFrame(frame);
 }
 
+/* ======================== 屏幕适配（物理像素对齐的像素化缩放） ========================
+ *
+ * 掌机逻辑分辨率 160×128。两步保证像素方正锐利：
+ * 1. 按可用视口计算最大整数倍 CSS 缩放（scale），不做任意比例拉伸；
+ * 2. canvas 物理分辨率 = 160×128 × pixelScale（整数，取 scale×devicePixelRatio 就近取整），
+ *    配合 Draw.setPixelScale 的软件上采样，使每个游戏像素都对齐物理像素网格，
+ *    即使 DPR 为 1.25/1.5 这类非整数值也不会模糊。
+ */
+
+function fitScreen() {
+    const canvas = document.getElementById('screen');
+    if (!canvas) return;
+
+    const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    /* 触屏设备给右下角虚拟按键留空间 */
+    const vpadSpace = coarse ? 150 : 0;
+    /* 顶部留白 12 + 底部提示文字约 30 */
+    const availW = Math.max(0, window.innerWidth - 24);
+    const availH = Math.max(0, window.innerHeight - 42 - vpadSpace);
+
+    let scale = Math.floor(Math.min(availW / SCREEN_W, availH / SCREEN_H));
+    if (scale < 1) scale = 1;
+
+    /* 物理像素倍率：scale 换算到设备像素后取整 */
+    const dpr = window.devicePixelRatio || 1;
+    const px = Math.max(1, Math.round(scale * dpr));
+
+    /* canvas 内部分辨率按物理像素倍率设置（软件上采样） */
+    canvas.width = SCREEN_W * px;
+    canvas.height = SCREEN_H * px;
+    Draw.setPixelScale(px);
+
+    /* CSS 尺寸仍为整数倍逻辑缩放 */
+    canvas.style.width = (SCREEN_W * scale) + 'px';
+    canvas.style.height = (SCREEN_H * scale) + 'px';
+}
+
 /* ======================== 启动 ======================== */
 
 async function boot() {
@@ -330,6 +367,11 @@ async function boot() {
     const canvas = document.getElementById('screen');
     Draw.attach(canvas);
     Input.init(canvas);
+
+    /* 屏幕整数倍适配 */
+    fitScreen();
+    window.addEventListener('resize', fitScreen);
+    window.addEventListener('orientationchange', fitScreen);
 
     /* 静音恢复 */
     Audio2.muted = Persist.getMute();

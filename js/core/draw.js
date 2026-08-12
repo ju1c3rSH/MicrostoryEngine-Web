@@ -6,15 +6,26 @@
  */
 
 const Draw = {
-    ctx: null,          /* 160×128 主画布 2D context */
+    ctx: null,          /* 160×128 逻辑坐标系（物理像素由 setPixelScale 决定） */
     img: null,          /* 离屏缓存：CG 等全屏图 */
     fontName: 'MiSans, "PingFang SC", "Microsoft YaHei", sans-serif',
     fontBase: '14px ',
+    pixelScale: 1,
 
     attach(canvas) {
         this.ctx = canvas.getContext('2d');
         this.img = null;
         this.ctx.imageSmoothingEnabled = false;
+        this.setPixelScale(1);
+    },
+
+    /* 软件上采样：canvas 物理分辨率 = 逻辑分辨率 × pixelScale（整数），
+     * 绘制时按比例变换，保证每个游戏像素都对齐物理像素网格，永不模糊。 */
+    setPixelScale(px) {
+        this.pixelScale = Math.max(1, Math.floor(px));
+        if (this.ctx) {
+            this.ctx.setTransform(this.pixelScale, 0, 0, this.pixelScale, 0, 0);
+        }
     },
 
     clear(color) {
@@ -39,12 +50,14 @@ const Draw = {
         c.globalAlpha = 1;
     },
 
-    /* 边框矩形 */
+    /* 边框矩形：用四条填充实现（像素完美，整数坐标无抗锯齿），lineW 为逻辑像素 */
     strokeRect(x, y, w, h, color, lineW = 1) {
-        const c = this.ctx;
-        c.strokeStyle = hexColor(color);
-        c.lineWidth = lineW;
-        c.strokeRect(Math.floor(x) + 0.5, Math.floor(y) + 0.5, Math.floor(w), Math.floor(h));
+        x = Math.floor(x); y = Math.floor(y); w = Math.floor(w); h = Math.floor(h);
+        if (lineW < 1) lineW = 1;
+        this.fillRect(x, y, w, lineW, color);
+        this.fillRect(x, y + h - lineW, w, lineW, color);
+        this.fillRect(x, y, lineW, h, color);
+        this.fillRect(x + w - lineW, y, lineW, h, color);
     },
 
     /* 填充圆 */
