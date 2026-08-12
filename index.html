@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MicroStory</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="game-wrap">
+  <canvas id="screen" width="160" height="128"></canvas>
+  <div id="vpad">
+    <div class="vpad-grid">
+      <button id="vpad-up" class="vpad-btn">↑</button>
+      <button id="vpad-left" class="vpad-btn">←</button>
+      <button id="vpad-down" class="vpad-btn">↓</button>
+      <button id="vpad-right" class="vpad-btn">→</button>
+    </div>
+    <div class="vpad-ab">
+      <button id="vpad-b" class="vpad-btn">B</button>
+      <button id="vpad-a" class="vpad-btn vpad-a">A</button>
+    </div>
+  </div>
+</div>
+<p id="hint">↑↓←→ 移动 · Enter/Z/单击 = A · Esc/X = B</p>
+
+<script src="js/core/util.js"></script>
+<script src="js/core/draw.js"></script>
+<script src="js/core/audio.js"></script>
+<script src="js/core/persist.js"></script>
+<script src="js/core/engine.js"></script>
+<script src="js/core/story.js"></script>
+<script src="js/core/story_store.js"></script>
+<script src="js/core/input.js"></script>
+<script src="js/stories.js"></script>
+<script src="js/ui/screen.js"></script>
+<script src="js/ui/dialog.js"></script>
+<script src="js/ui/title_screen.js"></script>
+<script src="js/ui/settings_screen.js"></script>
+<script src="js/ui/about_screen.js"></script>
+<script src="js/ui/game_screen.js"></script>
+<script src="js/games/minigame.js"></script>
+<script src="js/games/game_snake.js"></script>
+<script src="js/games/game_qte.js"></script>
+<script src="js/games/game_wam.js"></script>
+<script src="js/games/game_memory.js"></script>
+<script src="js/games/game_rhythm.js"></script>
+<script src="js/games/game_fishing.js"></script>
+<script src="js/games/game_fox.js"></script>
+<script src="js/games/game_gomoku.js"></script>
+<script src="js/games/game_othello.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

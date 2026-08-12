@@ -1,0 +1,98 @@
+@font-face {
+  font-family: 'MiSans';
+  src: url('../font/MiSans-Normal.ttf') format('truetype');
+  font-weight: normal;
+  font-display: swap;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: #0d1205;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+#game-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: calc(100% - 40px);
+  gap: 12px;
+}
+
+#screen {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: #9BBD30;
+  border: 4px solid #152205;
+  border-radius: 6px;
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.6);
+  /* 适配视口：等比放大 160×128，最大约 90vw */
+  width: min(90vw, calc(90vh * 1.25));
+  height: auto;
+  aspect-ratio: 160 / 128;
+  touch-action: none;
+}
+
+#hint {
+  position: fixed;
+  left: 0; right: 0; bottom: 6px;
+  text-align: center;
+  color: #6b9a10;
+  font: 12px/1.6 'MiSans', 'Microsoft YaHei', sans-serif;
+}
+
+/* 虚拟按键（触屏） */
+#vpad {
+  position: fixed;
+  right: 10px;
+  bottom: 10px;
+  display: none;
+  gap: 14px;
+  align-items: flex-end;
+  z-index: 10;
+}
+
+.vpad-grid {
+  display: grid;
+  grid-template-columns: 44px 44px 44px;
+  grid-template-rows: 44px 44px;
+  gap: 4px;
+}
+#vpad-up { grid-column: 2; grid-row: 1; }
+#vpad-left { grid-column: 1; grid-row: 2; }
+#vpad-down { grid-column: 2; grid-row: 2; }
+#vpad-right { grid-column: 3; grid-row: 2; }
+
+.vpad-ab {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.vpad-btn {
+  width: 44px;
+  height: 44px;
+  border: 2px solid #7DA520;
+  border-radius: 50%;
+  background: rgba(155, 189, 48, 0.35);
+  color: #e8f5c8;
+  font: bold 18px 'MiSans', sans-serif;
+  touch-action: none;
+}
+.vpad-a { width: 52px; height: 52px; font-size: 20px; }
+
+.vpad-btn:active { background: rgba(155, 189, 48, 0.8); }
+
+@media (pointer: coarse) {
+  #vpad { display: flex; }
+}
+
+@media (max-width: 480px) {
+  #screen { width: 96vw; }
+}

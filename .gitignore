@@ -1,0 +1,12 @@
+# 生成物（可用 tools/gen_story_data.py 重新生成）
+# stories/*.story 与 js/stories.js 保留在仓库中以便开箱即用
+
+# 编辑器/系统
+.vscode/
+.idea/
+*.log
+.DS_Store
+Thumbs.db
+
+# 临时
+node_modules/
