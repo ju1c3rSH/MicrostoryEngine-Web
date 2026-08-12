@@ -4,25 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>MicroStory</title>
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=4">
 </head>
 <body>
 <div id="game-wrap">
   <canvas id="screen" width="160" height="128"></canvas>
-  <div id="vpad">
-    <div class="vpad-grid">
-      <button id="vpad-up" class="vpad-btn">↑</button>
-      <button id="vpad-left" class="vpad-btn">←</button>
-      <button id="vpad-down" class="vpad-btn">↓</button>
-      <button id="vpad-right" class="vpad-btn">→</button>
-    </div>
-    <div class="vpad-ab">
-      <button id="vpad-b" class="vpad-btn">B</button>
-      <button id="vpad-a" class="vpad-btn vpad-a">A</button>
-    </div>
-  </div>
 </div>
-<p id="hint">↑↓←→ 移动 · Enter/Z/单击 = A · Esc/X = B</p>
+<button id="pad-toggle" class="pad-toggle" aria-label="切换手柄" aria-pressed="true" title="隐藏手柄">🎮</button>
+<button id="mute-btn" class="mute-btn" aria-label="切换静音">🔊</button>
+<p id="hint">WASD/方向键 移动 · Enter/Z/单击/A键 确认 · Esc/X/B键 返回 · 🎮开关手柄</p>
 
 <script src="js/core/util.js"></script>
 <script src="js/core/draw.js"></script>
@@ -38,6 +28,7 @@
 <script src="js/ui/title_screen.js"></script>
 <script src="js/ui/settings_screen.js"></script>
 <script src="js/ui/about_screen.js"></script>
+<script src="js/core/app_config.js"></script>
 <script src="js/ui/game_screen.js"></script>
 <script src="js/games/minigame.js"></script>
 <script src="js/games/game_snake.js"></script>

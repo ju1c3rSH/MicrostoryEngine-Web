@@ -40,7 +40,11 @@ const Audio2 = {
         if (this._master) {
             this._master.gain.setValueAtTime(m ? 0 : 1, this._ctx.currentTime);
         }
+        if (typeof this.onMuteChange === 'function') this.onMuteChange(m);
     },
+
+    /* 静音状态变化回调（页面按钮联动） */
+    onMuteChange: null,
 
     /* 播放单个音符：freq 0 = 休止 */
     _tone(freqHz, durationMs, velocity) {

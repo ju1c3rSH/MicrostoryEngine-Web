@@ -303,6 +303,7 @@ function frame(now) {
     T.set(now - S.t0);
 
     Audio2.tick();
+    Input.tick();
 
     for (const key of Input.drainAll()) gameKeyCb(key);
 
@@ -314,6 +315,30 @@ function frame(now) {
 
     drawFrame();
     requestAnimationFrame(frame);
+}
+
+/* ======================== 页面静音按钮（与游戏内静音联动） ======================== */
+
+function updateMuteButton(muted) {
+    const btn = document.getElementById('mute-btn');
+    if (!btn) return;
+    btn.textContent = muted ? '🔇' : '🔊';
+    btn.classList.toggle('muted', muted);
+}
+
+function initMuteButton() {
+    const btn = document.getElementById('mute-btn');
+    if (!btn) return;
+    /* Audio2.setMuted 触发回调 → 游戏内设置页切换时按钮同步更新 */
+    Audio2.onMuteChange = updateMuteButton;
+    btn.addEventListener('click', e => {
+        e.stopPropagation();
+        Audio2.ensure();
+        const m = !Audio2.muted;
+        Audio2.setMuted(m);
+        Persist.setMute(m);
+    });
+    updateMuteButton(Audio2.muted);
 }
 
 /* ======================== 屏幕适配（物理像素对齐的像素化缩放） ========================
@@ -329,9 +354,9 @@ function fitScreen() {
     const canvas = document.getElementById('screen');
     if (!canvas) return;
 
-    const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-    /* 触屏设备给右下角虚拟按键留空间 */
-    const vpadSpace = coarse ? 150 : 0;
+    // 固定手柄常驻：只要可见就预留 168px 底部空间（144 手柄 + 外边距），隐藏时不预留
+    const padVisible = (typeof Input !== 'undefined' && typeof Input.isPadVisible === 'function') ? Input.isPadVisible() : true;
+    const vpadSpace = padVisible ? 168 : 0;
     /* 顶部留白 12 + 底部提示文字约 30 */
     const availW = Math.max(0, window.innerWidth - 24);
     const availH = Math.max(0, window.innerHeight - 42 - vpadSpace);
@@ -375,6 +400,7 @@ async function boot() {
 
     /* 静音恢复 */
     Audio2.muted = Persist.getMute();
+    initMuteButton();
 
     ScreenManager.init();
     MiniGame.registerAll();
@@ -389,7 +415,7 @@ async function boot() {
         Persist.setGreetCount(g - 1);
         Dialog.show('你好',
             '欢迎来到 MicroStory ～|' +
-            '这里有 10 个小故事、9 个小游戏|' +
+            '这里有 ' + StoryStore.count() + ' 个小故事、' + MiniGame.games.length + ' 个小游戏|' +
             '愿你玩得开心！|' +
             '按 A 继续',
             DIALOG_VERTICAL);

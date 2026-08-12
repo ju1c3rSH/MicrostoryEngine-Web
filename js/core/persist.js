@@ -13,9 +13,11 @@ const PERSIST_GREET_INITIAL = 5;
 const PERSIST_SAVE_RECORD_MAX = 640;
 
 const Persist = {
+    /* Cookie 主通道 + localStorage 兜底（file:// 协议下 cookie 常不可用） */
     _get(name) {
         const m = document.cookie.match('(?:^|;\\s*)' + name + '=([^;]*)');
-        return m ? decodeURIComponent(m[1]) : null;
+        if (m) return decodeURIComponent(m[1]);
+        try { return localStorage.getItem('ms_c_' + name); } catch (e) { return null; }
     },
     _set(name, value) {
         /* 30 天过期；path=/ 保证各页面共享 */
@@ -23,9 +25,11 @@ const Persist = {
         d.setTime(d.getTime() + 30 * 24 * 3600 * 1000);
         document.cookie = name + '=' + encodeURIComponent(value) +
             '; expires=' + d.toUTCString() + '; path=/';
+        try { localStorage.setItem('ms_c_' + name, value); } catch (e) { /* 隐私模式 */ }
     },
     _erase(name) {
         document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+        try { localStorage.removeItem('ms_c_' + name); } catch (e) { /* ignore */ }
     },
 
     _key(prefix, series, episode) {

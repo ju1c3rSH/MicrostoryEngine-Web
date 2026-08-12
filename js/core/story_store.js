@@ -3,11 +3,13 @@
  * - 内置故事来自 stories.js 内嵌数据（或 stories/ 目录 fetch）
  * - 「已安装」槽位上限 14；删除记录持久化到 localStorage（对应分区擦除）
  * - 「SD 导入」用文件选择器读取 .story 文件安装为槽位（持久化到 localStorage）
+ * - easter_egg 为 Konami 彩蛋关卡，不进入故事列表（仅密技触发）
  */
 
 const PM_SLOT_MAX = 14;
 const PM_STORE_DELETED = 'ms_deleted';
 const PM_STORE_IMPORTED = 'ms_imported';
+const PM_EGG_FILE = 'easter_egg.story';
 
 const StoryStore = {
     slots: [],          /* [{story, thumb, imported}] 按 (series, episode) 升序 */
@@ -17,8 +19,9 @@ const StoryStore = {
         this._deleted = new Set(JSON.parse(localStorage.getItem(PM_STORE_DELETED) || '[]'));
         const stories = await StoryLoader.loadAll();
 
-        /* 内置故事 */
+        /* 内置故事（彩蛋关卡不显示） */
         for (const st of stories) {
+            if (st.fileName === PM_EGG_FILE) continue;
             if (this._deleted.has(st.fileName)) continue;
             this.slots.push(this._makeSlot(st, false));
         }
@@ -26,6 +29,7 @@ const StoryStore = {
         /* 导入的故事 */
         const imported = JSON.parse(localStorage.getItem(PM_STORE_IMPORTED) || '[]');
         for (const entry of imported) {
+            if (entry.fileName === PM_EGG_FILE) continue;
             try {
                 const bin = atob(entry.b64);
                 const bytes = new Uint8Array(bin.length);
@@ -86,6 +90,7 @@ const StoryStore = {
                         const bytes = new Uint8Array(reader.result);
                         const st = parseStory(file.name, bytes);
                         if (!st) { alert('无效的 .story 文件'); resolve(false); return; }
+                        if (st.fileName === PM_EGG_FILE) { alert('彩蛋关卡不可安装'); resolve(false); return; }
                         if (this.slots.length >= PM_SLOT_MAX) { alert('槽位已满 (14)'); resolve(false); return; }
                         if (this._deleted.has(st.fileName)) {
                             this._deleted.delete(st.fileName);

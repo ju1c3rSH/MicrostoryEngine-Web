@@ -153,10 +153,11 @@ const GameScreen = {
             this.revealChars = 0;
             this.lastTickMs = T.get();
             this.textScroll = 0;
-        } else if (eng.action === ACT_WAIT_CHOICE) {
+        } else         if (eng.action === ACT_WAIT_CHOICE) {
             this.state = GS_CHOICE;
             this.choiceCnt = eng.choiceCount();
             this.selChoice = 0;
+            this.choiceChangeMs = T.get();
         } else if (eng.action === ACT_END) {
             this._hideCg();
             this.state = GS_IDLE;
@@ -234,11 +235,17 @@ const GameScreen = {
 
         if (this.state === GS_CHOICE) {
             if (lvKey === LV_KEY_UP) {
-                if (this.selChoice > 0) this.selChoice--;
+                if (this.selChoice > 0) {
+                    this.selChoice--;
+                    this.choiceChangeMs = T.get();
+                }
                 return true;
             }
             if (lvKey === LV_KEY_DOWN) {
-                if (this.selChoice < this.choiceCnt - 1) this.selChoice++;
+                if (this.selChoice < this.choiceCnt - 1) {
+                    this.selChoice++;
+                    this.choiceChangeMs = T.get();
+                }
                 return true;
             }
             if (lvKey === LV_KEY_ENTER) return true;
@@ -376,14 +383,26 @@ const GameScreen = {
         Draw.textCenter(spkText, 0, 1, SCREEN_W, CLR_CHOICE_T);
 
         if (this.state === GS_CHOICE) {
-            /* 选项 */
+            /* 选项：溢出文字选中时循环滚动（对应 LVGL SCROLL_CIRCULAR，8s 一个来回），未选中裁剪 */
+            const vw = TEXT_W - 8;
+            const clipX = PANEL_PAD + 4;
             for (let i = 0; i < this.choiceCnt; i++) {
                 const y = CHOICE_Y0 + i * CHOICE_H;
+                const text = eng.choiceText(i);
+                const tw = Draw.measure(text);
+                const over = tw > vw;
                 if (i === this.selChoice) {
                     Draw.fillRect(PANEL_PAD, y, TEXT_W, CHOICE_H, 0x000000);
-                    Draw.text(eng.choiceText(i), PANEL_PAD + 4, y + 1, 0xFFFFFF);
+                    let off = 0;
+                    if (over) {
+                        const span = tw - vw;
+                        const phase = (T.get() - (this.choiceChangeMs || 0)) % 8000;
+                        const t = phase < 4000 ? phase / 4000 : (8000 - phase) / 4000;
+                        off = -Math.round(t * span);
+                    }
+                    Draw.textScrolled(text, clipX, y + 1, vw, off, 0xFFFFFF);
                 } else {
-                    Draw.text(eng.choiceText(i), PANEL_PAD + 4, y + 1, 0x000000);
+                    Draw.textScrolled(text, clipX, y + 1, vw, 0, 0x000000);
                 }
             }
             return;

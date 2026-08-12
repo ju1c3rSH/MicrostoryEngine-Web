@@ -105,6 +105,23 @@ const Draw = {
         this.text(str, x + w / 2, y, color, { align: 'center', size });
     },
 
+    /* 文字在固定窗口 [clipX, clipX+w] 内绘制，offset 为文字起点相对 clipX 的偏移。
+     * 裁剪窗口固定不随文字移动，滚动显示时窗口始终停留在原地（对应 LVGL CLIP/SCROLL_CIRCULAR）。 */
+    textScrolled(str, clipX, y, w, offset, color, opts = {}) {
+        const c = this.ctx;
+        const size = opts.size || 14;
+        c.font = size + 'px ' + this.fontName;
+        c.fillStyle = hexColor(color);
+        c.textBaseline = 'top';
+        c.textAlign = 'left';
+        c.save();
+        c.beginPath();
+        c.rect(Math.floor(clipX), Math.floor(y), Math.ceil(w), size + 4);
+        c.clip();
+        c.fillText(str, clipX + (offset || 0), y);
+        c.restore();
+    },
+
     /* 绘制离屏图像 */
     image(img, x, y) {
         this.ctx.drawImage(img, Math.floor(x), Math.floor(y));

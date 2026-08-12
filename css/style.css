@@ -26,7 +26,6 @@ html, body {
 }
 
 #screen {
-  /* 像素化：禁止一切插值/抗锯齿，最近邻渲染 */
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   -ms-interpolation-mode: nearest-neighbor;
@@ -34,7 +33,6 @@ html, body {
   border: 4px solid #152205;
   border-radius: 6px;
   box-shadow: 0 0 24px rgba(0, 0, 0, 0.6);
-  /* 尺寸由 JS fitScreen() 设置为整数倍缩放，保证像素方正不糊 */
   width: auto;
   height: auto;
   touch-action: none;
@@ -46,50 +44,212 @@ html, body {
   text-align: center;
   color: #6b9a10;
   font: 12px/1.6 'MiSans', 'Microsoft YaHei', sans-serif;
+  pointer-events: none;
 }
 
-/* 虚拟按键（触屏） */
-#vpad {
+/* ---------- 顶部按钮 ---------- */
+#mute-btn, #pad-toggle {
   position: fixed;
-  right: 10px;
-  bottom: 10px;
-  display: none;
-  gap: 14px;
-  align-items: flex-end;
-  z-index: 10;
-}
-
-.vpad-grid {
-  display: grid;
-  grid-template-columns: 44px 44px 44px;
-  grid-template-rows: 44px 44px;
-  gap: 4px;
-}
-#vpad-up { grid-column: 2; grid-row: 1; }
-#vpad-left { grid-column: 1; grid-row: 2; }
-#vpad-down { grid-column: 2; grid-row: 2; }
-#vpad-right { grid-column: 3; grid-row: 2; }
-
-.vpad-ab {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.vpad-btn {
+  top: 12px;
   width: 44px;
   height: 44px;
-  border: 2px solid #7DA520;
-  border-radius: 50%;
-  background: rgba(155, 189, 48, 0.35);
-  color: #e8f5c8;
-  font: bold 18px 'MiSans', sans-serif;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: rgba(21, 34, 5, 0.78);
+  border: 3px solid #7DA520;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.35), 0 2px 0 #152205;
+  border-radius: 10px;
+  color: #9BBD30;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: transform 0.08s ease, background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+#mute-btn { right: 12px; }
+#pad-toggle { right: 64px; font-size: 18px; }
+#mute-btn.muted, #pad-toggle.off {
+  background: rgba(107, 154, 16, 0.85);
+  color: #152205;
+}
+#mute-btn:active, #pad-toggle:active {
+  transform: translateY(1px) scale(0.97);
+}
+
+/* ---------- 常驻像素手柄（借鉴 html5-virtual-game-controller 分区 + bobboteck/JoyStick 阈值思路，自研固定布局） ---------- */
+
+#touch-zone {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s ease;
+  will-change: transform, opacity;
+}
+#touch-zone.hidden-pad {
+  transform: translateY(110%);
+  opacity: 0;
+}
+
+/* 左右容器：允许按键接收事件，中间镂空不遮挡 */
+.pad-side {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-end;
+}
+
+/* ---- D-pad 固定 144x144 ---- */
+#dpad {
+  position: relative;
+  width: 144px;
+  height: 144px;
+  flex-shrink: 0;
+  opacity: 0.92;
+  filter: drop-shadow(0 2px 0 #152205);
   touch-action: none;
 }
-.vpad-a { width: 52px; height: 52px; font-size: 20px; }
 
-.vpad-btn:active { background: rgba(155, 189, 48, 0.8); }
+.dpad-key {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(155, 189, 48, 0.88);
+  border: 3px solid #152205;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25), 0 2px 0 #152205;
+  color: #152205;
+  font: bold 20px/1 'MiSans', sans-serif;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.35);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  transition: transform 0.08s ease, background 0.12s ease, box-shadow 0.08s ease, filter 0.12s ease;
+  animation: padIn 0.28s ease both;
+}
+.dpad-up { left: 49px; top: 0; animation-delay: 0.02s; }
+.dpad-left { left: 0; top: 49px; animation-delay: 0.04s; }
+.dpad-center { left: 49px; top: 49px; background: rgba(168, 202, 56, 0.9); animation-delay: 0s; pointer-events: none; }
+.dpad-right { left: 98px; top: 49px; animation-delay: 0.06s; }
+.dpad-down { left: 49px; top: 98px; animation-delay: 0.08s; }
 
-@media (pointer: coarse) {
-  #vpad { display: flex; }
+.dpad-key::before {
+  content: '';
+  width: 0;
+  height: 0;
+  transition: transform 0.08s ease;
+}
+.dpad-up::before { border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 14px solid #152205; }
+.dpad-down::before { border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 14px solid #152205; }
+.dpad-left::before { border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-right: 14px solid #152205; }
+.dpad-right::before { border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-left: 14px solid #152205; }
+
+.dpad-key.active {
+  background: #e8f5c8;
+  box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.2), 0 1px 0 #152205;
+  transform: translateY(1px) scale(0.97);
+  filter: brightness(1.05);
+}
+.dpad-key.active::before { transform: scale(0.92); }
+.dpad-key:active { transform: translateY(1px) scale(0.96); }
+
+/* ---- 右侧 A/B 固定 ---- */
+.pad-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  padding-bottom: 6px;
+  /* 掌机斜排：B 高 A 低 */
+}
+
+.vbtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(21, 34, 5, 0.82);
+  border: 3px solid #7DA520;
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.35), 0 2px 0 #152205;
+  color: #9BBD30;
+  font: bold 22px/1 'MiSans', sans-serif;
+  border-radius: 14px;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  cursor: pointer;
+  transition: transform 0.08s ease, background 0.12s ease, color 0.12s ease, box-shadow 0.08s ease, filter 0.12s ease;
+  animation: padIn 0.3s ease both;
+  will-change: transform;
+}
+.vbtn-a {
+  width: 62px; height: 62px;
+  border-radius: 16px;
+  font-size: 22px;
+  animation-delay: 0.05s;
+}
+.vbtn-b {
+  width: 52px; height: 52px;
+  border-radius: 13px;
+  font-size: 18px;
+  margin-bottom: 18px;
+  animation-delay: 0.1s;
+}
+/* B 在左上，A 在右下，形成菱形手感 */
+.pad-actions .vbtn-b { order: 1; }
+.pad-actions .vbtn-a { order: 2; }
+
+.vbtn.active, .vbtn:active {
+  background: rgba(155, 189, 48, 0.95);
+  color: #152205;
+  box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.25), 0 1px 0 #152205;
+  transform: translateY(2px) scale(0.96);
+  filter: brightness(1.05);
+}
+/* 按下脉冲（借鉴 RetroArch 透明 overlay 动画） */
+.vbtn.active { animation: btnPulse 0.28s ease; }
+.dpad-key.active { animation: btnPulse 0.28s ease; }
+
+@keyframes padIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes btnPulse {
+  0% { filter: brightness(1); }
+  40% { filter: brightness(1.18); }
+  100% { filter: brightness(1.05); }
+}
+
+/* 窄屏/横屏适配：保证不遮挡 160x128 画面 */
+@media (max-width: 420px) {
+  #dpad { width: 126px; height: 126px; }
+  .dpad-key { width: 40px; height: 40px; }
+  .dpad-up { left: 43px; top: 0; }
+  .dpad-left { left: 0; top: 43px; }
+  .dpad-center { left: 43px; top: 43px; }
+  .dpad-right { left: 86px; top: 43px; }
+  .dpad-down { left: 43px; top: 86px; }
+  .dpad-up::before { border-left-width: 8px; border-right-width: 8px; border-bottom-width: 11px; }
+  .dpad-down::before { border-left-width: 8px; border-right-width: 8px; border-top-width: 11px; }
+  .dpad-left::before { border-top-width: 8px; border-bottom-width: 8px; border-right-width: 11px; }
+  .dpad-right::before { border-top-width: 8px; border-bottom-width: 8px; border-left-width: 11px; }
+  .vbtn-a { width: 56px; height: 56px; }
+  .vbtn-b { width: 46px; height: 46px; }
+}
+@media (max-height: 560px) {
+  #touch-zone { padding-top: 6px; padding-bottom: 6px; }
+  #hint { display: none; }
+}
+
+/* 桌面端也常驻，但降低透明度避免喧宾夺主；hover 时提亮 */
+@media (pointer: fine) {
+  #touch-zone { opacity: 0.88; }
+  #touch-zone:hover { opacity: 1; }
 }
