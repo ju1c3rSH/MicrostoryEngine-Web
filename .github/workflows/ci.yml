@@ -1,0 +1,19 @@
+# CI - 无头冒烟测试(纯 Node 零依赖,直接运行仓库内测试)
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 运行无头冒烟测试
+        run: node test/integration.js

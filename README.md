@@ -47,8 +47,32 @@ python -m http.server 8000
 ## 存档（Cookie）
 
 - 存档键 `sav_s{series}e{ep}`：含 magic/title/FNV-1a code_hash 校验，故事重编后自动判失效
-- 通关键 `clr_s{series}e{ep}`、问候计数 `greet`（默认 5）、静音 `mute`
+- 通关键 `clr_s{series}e{ep}`、问候计数 `greet`（默认 5）、静音 `mute`、音量 `bgmvol`/`sfxvol`（0~8）
 - 清除 Cookie 即重置全部进度；`localStorage` 另存"已删除槽位"与"导入的故事"
+
+### 存档备份（防止清 Cookie 丢进度）
+
+- 设置 → 管理 → **导出存档**：把全部存档/通关记录下载为 `microstory-saves-YYYYMMDD.json`
+- 设置 → 管理 → **导入存档**：选择备份文件恢复；逐条校验 magic/title/code_hash，
+  只恢复与当前已安装故事匹配的记录，不匹配/未安装/无效的条目会分类计数提示
+- 故事重编后旧存档不再被静默忽略：启动该故事或读取存档时会明确提示「存档已失效」并清除
+- 设置 → 管理页还可调节 **BGM/音效音量**（←→ 或 A，0~8 格）与 **全屏** 切换
+
+## 移动端适配清单
+
+已落实（代码层）：
+
+- [x] 首次交互解锁 AudioContext（点击/按键/虚拟键多入口调用 `Audio2.ensure()`）
+- [x] 震动反馈均有 `navigator.vibrate` 存在性守卫（iOS Safari 无此 API 时静默跳过）
+- [x] 虚拟方向键常驻可开关（`ms_pad_visible`），布局计算预留 168px 底部空间
+- [x] 整数倍像素化缩放 + `devicePixelRatio` 取整，DPR 1.25/1.5 屏幕不模糊
+- [x] 触屏单击画面 = A 键；`user-scalable=no` 禁双击缩放
+
+待真机验证（欢迎反馈）：
+
+- [ ] iOS Safari：静音按钮→游戏内声音的解锁时序；虚拟按键在浏览器工具栏收展时的表现
+- [ ] Android Chrome：后台切回后 AudioContext 恢复；外接手柄与虚拟按键并存
+- [ ] 小屏（<360px 宽）：画面缩放后虚拟按键与提示文字是否互相遮挡
 
 ## 故事数据更新
 
@@ -60,6 +84,11 @@ python tools/gen_story_data.py F:\MicroStory\stories
 
 脚本会：复制 12 个 `.story` 到 `stories/` 并重新生成内嵌数据的 `js/stories.js`。
 
+## 字体
+
+- 页面字体为 MiSans 子集 `font/MiSans-Subset.ttf`（由 `font/MiSans-Normal.ttf` 子集化生成，原文件保留作子集源，勿删）。
+- 新增故事或改动文本后重新生成（自动收集 js/html/css、stories/*.story 文本、GB2312 一级汉字，并自检缺字）：`python tools/subset_font.py`（依赖 fonttools）。
+
 ## 已知差异（有意为之）
 
 - 硬件传感器（温度/光照）健康提醒未移植（Web 无传感器）
@@ -69,8 +98,11 @@ python tools/gen_story_data.py F:\MicroStory\stories
 
 ## 测试
 
-无头冒烟测试（Node 模拟 DOM/Canvas，跑通 12 个故事全流程 + 9 个小游戏 + 存档/暂停/彩蛋）：
+无头冒烟测试(纯 Node >=18 零依赖,`node:vm` 加载 index.html 全部脚本 + DOM/Canvas/cookie/storage 垫片,
+覆盖全部故事引擎全流程、9 个小游戏、存档/备份/音量、槽位管理与组合键):
 
 ```powershell
-node C:\Users\Episode\AppData\Local\Temp\opencode\test_integration.js
+node test/integration.js
 ```
+
+GitHub Actions CI 在 push/PR 时自动运行同一命令,见 `.github/workflows/ci.yml`。
