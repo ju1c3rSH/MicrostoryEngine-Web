@@ -302,6 +302,16 @@ const GameScreen = {
 
     load(eng) {
         if (!this.metaValid) { this.exitPause(); return; }
+        /* 故事重编后的旧存档：明确提示失效，而不是笼统显示「无存档」 */
+        const peek = Persist.savePeek(this.metaSeries, this.metaEpisode, this.metaTitle, this.metaHash);
+        if (peek.status === 'stale') {
+            Persist.saveErase(this.metaSeries, this.metaEpisode);
+            this.hasSave = false;
+            this.notifyText = '存档已失效，已清除';
+            this.notifyEndMs = T.get() + NOTIFY_DURATION_MS;
+            this.exitPause();
+            return;
+        }
         const es = Persist.saveRead(this.metaSeries, this.metaEpisode, this.metaTitle, this.metaHash);
         if (es && eng.deserialize(es)) {
             this.hasSave = true;

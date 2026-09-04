@@ -13,6 +13,8 @@ const TitleScreen = {
 
     show() {
         this.active = true;
+        /* 返回标题时刷新存档标记（游戏中可能已保存/删除存档） */
+        StoryStore.refreshSaveFlags();
     },
     hide() {
         this.active = false;

@@ -4,9 +4,14 @@
  * 用 OscillatorNode(square) 合成，忠实还原蜂鸣器 PWM 音色。
  */
 
+/* 音量档位上限（设置页音量条格数） */
+const AUDIO_VOL_MAX = 8;
+
 const Audio2 = {
     _ctx: null,
     _master: null,
+    _bgmGain: null,
+    _sfxGain: null,
 
     _notes: null,
     _noteCount: 0,
@@ -19,6 +24,8 @@ const Audio2 = {
     _beepActive: false,
 
     muted: false,
+    bgmVol: AUDIO_VOL_MAX,
+    sfxVol: AUDIO_VOL_MAX,
 
     /* 浏览器自动播放策略：首次用户交互时调用 */
     ensure() {
@@ -32,6 +39,11 @@ const Audio2 = {
         this._master = this._ctx.createGain();
         this._master.gain.value = this.muted ? 0 : 1;
         this._master.connect(this._ctx.destination);
+        this._bgmGain = this._ctx.createGain();
+        this._sfxGain = this._ctx.createGain();
+        this._bgmGain.connect(this._master);
+        this._sfxGain.connect(this._master);
+        this._applyVolumes();
         return this._ctx;
     },
 
@@ -43,11 +55,25 @@ const Audio2 = {
         if (typeof this.onMuteChange === 'function') this.onMuteChange(m);
     },
 
+    /* 音量调节（bgm/sfx ∈ 0~AUDIO_VOL_MAX）；ensure 之前调用只记录值，创建上下文时生效 */
+    setVolumes(bgm, sfx) {
+        this.bgmVol = Math.max(0, Math.min(AUDIO_VOL_MAX, Math.floor(bgm) || 0));
+        this.sfxVol = Math.max(0, Math.min(AUDIO_VOL_MAX, Math.floor(sfx) || 0));
+        this._applyVolumes();
+    },
+
+    _applyVolumes() {
+        if (!this._ctx || !this._bgmGain || !this._sfxGain) return;
+        const t = this._ctx.currentTime;
+        this._bgmGain.gain.setValueAtTime(this.bgmVol / AUDIO_VOL_MAX, t);
+        this._sfxGain.gain.setValueAtTime(this.sfxVol / AUDIO_VOL_MAX, t);
+    },
+
     /* 静音状态变化回调（页面按钮联动） */
     onMuteChange: null,
 
-    /* 播放单个音符：freq 0 = 休止 */
-    _tone(freqHz, durationMs, velocity) {
+    /* 播放单个音符：freq 0 = 休止；isBgm 决定走 BGM 还是音效通道 */
+    _tone(freqHz, durationMs, velocity, isBgm) {
         if (!this._ctx || !this._master) return;
         if (freqHz <= 0) return;
         const t0 = this._ctx.currentTime;
@@ -61,7 +87,8 @@ const Audio2 = {
         g.gain.setValueAtTime(vol, t0 + durationMs / 1000 * 0.9);
         g.gain.linearRampToValueAtTime(0, t0 + durationMs / 1000);
         osc.connect(g);
-        g.connect(this._master);
+        g.connect(isBgm && this._bgmGain ? this._bgmGain
+                                         : (this._sfxGain || this._master));
         osc.start(t0);
         osc.stop(t0 + durationMs / 1000 + 0.02);
     },
@@ -94,7 +121,7 @@ const Audio2 = {
         if (this._playing) return;
         this._beepActive = true;
         this._beepEndMs = T.get() + durationMs;
-        this._tone(freqHz, durationMs, 100);
+        this._tone(freqHz, durationMs, 100, false);
     },
 
     /* music_beep_default */
@@ -148,7 +175,8 @@ const Audio2 = {
         }
 
         const n = this._notes[this._noteIdx++];
-        this._tone(n.freq, n.duration_ms, n.velocity);
+        /* play() 循环音轨 = BGM 通道；playOnce() 一次性短音 = 音效通道 */
+        this._tone(n.freq, n.duration_ms, n.velocity, this._loop);
         this._noteEndMs = now + n.duration_ms;
     },
 };

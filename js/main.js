@@ -77,6 +77,16 @@ function startSlotStory(story, resume) {
     GameScreen.setCgResources(story.cg);
     GameScreen.setStoryMeta(story.series, story.episode, story.title, story.hash);
 
+    /* 存档可能因故事重编而失效（codeHash/title 不符）：显式提示并清除，不再静默忽略 */
+    let staleSave = false;
+    if (!resume && S.storyMetaValid) {
+        const peek = Persist.savePeek(S.slotSeries, S.slotEpisode, S.slotTitle, S.slotHash);
+        if (peek.status === 'stale') {
+            Persist.saveErase(S.slotSeries, S.slotEpisode);
+            staleSave = true;
+        }
+    }
+
     if (resume && S.storyMetaValid) {
         const es = Persist.saveRead(S.slotSeries, S.slotEpisode, S.slotTitle, S.slotHash);
         if (!es || !Eng.deserialize(es)) Eng.proceed();
@@ -88,6 +98,10 @@ function startSlotStory(story, resume) {
     GameScreen.show();
     GameScreen.update(Eng);
     GameScreen.resetPropTrack();
+
+    if (staleSave) {
+        Dialog.show('存档提示', '故事已更新，原存档|不再兼容，已清除。', DIALOG_VERTICAL);
+    }
 }
 
 function startEggStory() {
@@ -397,9 +411,12 @@ async function boot() {
     fitScreen();
     window.addEventListener('resize', fitScreen);
     window.addEventListener('orientationchange', fitScreen);
+    /* 进入/退出全屏后视口尺寸变化，重新适配整数倍缩放 */
+    document.addEventListener('fullscreenchange', fitScreen);
 
-    /* 静音恢复 */
+    /* 静音/音量恢复 */
     Audio2.muted = Persist.getMute();
+    Audio2.setVolumes(Persist.getBgmVol(), Persist.getSfxVol());
     initMuteButton();
 
     ScreenManager.init();
