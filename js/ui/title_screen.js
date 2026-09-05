@@ -84,7 +84,7 @@ const TitleScreen = {
             }
         }
 
-        /* 标题（缩略图右侧） */
+        /* 标题（缩略图右侧，96×14 槽位，溢出裁剪对应 LVGL LONG_CLIP） */
         let title = '';
         if (hasStory) {
             const st = StoryStore.get(this.storyIdx);
@@ -93,7 +93,7 @@ const TitleScreen = {
         } else {
             title = '—— 无剧集 ——';
         }
-        Draw.text(title, 58, 5, CLR_SPEAKER);
+        Draw.textClip(title, 58, 5, 96, CLR_SPEAKER);
 
         /* 副标题 */
         if (hasStory && StoryStore.get(this.storyIdx).story.subtitle) {

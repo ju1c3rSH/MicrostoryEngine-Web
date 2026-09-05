@@ -35,7 +35,7 @@ const AboutScreen = {
         Draw.textCenter('—— 关于本项目 ——', 0, 4, SCREEN_W, CLR_SPEAKER);
         let y = 22;
         for (const line of this.lines) {
-            Draw.text(line, PANEL_PAD, y, CLR_TEXT);
+            Draw.textClip(line, PANEL_PAD, y, SCREEN_W - PANEL_PAD * 2, CLR_TEXT);
             y += 14;
         }
         Draw.textCenter('按任意键返回', 0, SCREEN_H - 20, SCREEN_W, CLR_SPEAKER);

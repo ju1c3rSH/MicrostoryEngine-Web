@@ -11,6 +11,7 @@
  *   1. 启动冒烟(boot / ScreenManager / 问候对话框 / MiniGame 注册)
  *   2. 故事数据与解析(13 个 .story 头字段)
  *   2b. 图像解码回归(decodeCg RLE/RAW 合成 + 全部真实 CG 全帧非透明)
+ *   2c. 文字裁剪与跑马灯(textClip/textCenterClip/marqueeOffset 语义 + 各画面接线)
  *   3. 可见故事 + 彩蛋:easter_egg 引擎全流程(点击/选项/小游戏,3 种选择策略)
  *   4. 9 个小游戏独立生命周期(按键/步进/draw/结束/得分)
  *   5. Persist:存档往返/损坏/失效/通关/问候/静音/音量/备份导出导入
@@ -1140,6 +1141,71 @@ async function suiteMainWiring() {
     gexec('SysLed.set("idle"); Eng.action = ACT_RUNNING; ScreenManager.switch(SCR_TITLE); Dialog.hide();');
 }
 
+/* ---------------- 套件:文字裁剪 + 跑马灯 ----------------
+ *
+ * 对齐 C 端：单行槽位溢出裁剪（LONG_CLIP）；选项选中溢出恒速跑马灯（SCROLL_CIRCULAR）。
+ * 垫片 measureText 为“字符数×12px”近似宽度（shims.js:267），溢出断言基于该语义；
+ * 真实 Canvas 像素宽度已在浏览器实测（hiffu 选项 228~276px > 136px 窗口）。
+ */
+
+function suiteTextClip() {
+    header('文字裁剪与跑马灯（标题/对话框/选项恒速滚动）');
+
+    /* Draw 原语存在性 */
+    check('Draw.textClip 存在', gexec('typeof Draw.textClip') === 'function');
+    check('Draw.textCenterClip 存在', gexec('typeof Draw.textCenterClip') === 'function');
+    check('Draw.marqueeOffset 存在', gexec('typeof Draw.marqueeOffset') === 'function');
+
+    /* marqueeOffset：两端停顿 + 中间恒速（span=100, speed=30px/s, dwell=1500ms） */
+    const mq = gexec(`(function () {
+        const m = Draw.marqueeOffset;
+        return [
+            m(100, 0), m(100, 500), m(100, 1499),
+            m(100, 1500), m(100, 1500 + 1667),
+            m(100, 1500 + 3333), m(100, 1500 + 3333 + 500),
+            m(100, 1500 + 3333 + 1500 + 1667),
+            m(0, 5000), m(-5, 5000),
+        ];
+    })()`);
+    check('起点停顿内偏移为 0', mq[0] === 0 && mq[1] === 0 && mq[2] === 0,
+        JSON.stringify(mq.slice(0, 3)));
+    check('滚动中段约一半（恒速）',
+        Math.abs(mq[4] + 50) <= 2, '实际 ' + mq[4]);
+    check('终点偏移 -span 且停顿保持', mq[5] === -100 && mq[6] === -100,
+        mq[5] + '/' + mq[6]);
+    check('回程中段约一半', Math.abs(mq[7] + 50) <= 2, '实际 ' + mq[7]);
+    check('span<=0 时偏移为 0', mq[8] === 0 && mq[9] === 0);
+
+    /* 恒速性：等间隔采样位移差恒定（旧三角波是变速的） */
+    const steps = gexec(`(function () {
+        const m = Draw.marqueeOffset, out = [];
+        for (let t = 1600; t <= 4600; t += 500) out.push(m(200, t));
+        return out;
+    })()`);
+    const diffs = [];
+    for (let i = 1; i < steps.length; i++) diffs.push(steps[i] - steps[i - 1]);
+    const steady = diffs.every(d => Math.abs(d - diffs[0]) <= 1);
+    check('滚动段等间隔位移恒定（恒速）', steady, JSON.stringify(steps));
+
+    /* 选项绘制接线：game_screen 用 marqueeOffset 而非三角波 */
+    check('选项滚动走 marqueeOffset',
+        g('GameScreen.draw').toString().indexOf('marqueeOffset') >= 0);
+
+    /* 标题绘制接线：标题用 textClip 裁剪 */
+    check('标题绘制走 textClip',
+        g('TitleScreen.draw').toString().indexOf('textClip') >= 0);
+
+    /* 对话框选项绘制接线：纵向 textClip / 横向 textCenterClip */
+    const dlgSrc = g('Dialog.draw').toString();
+    check('对话框纵向选项走 textClip', dlgSrc.indexOf('textClip') >= 0);
+    check('对话框横向选项走 textCenterClip', dlgSrc.indexOf('textCenterClip') >= 0);
+
+    /* CG 字幕绘制接线：textClip */
+    check('CG 字幕绘制走 textClip',
+        g('GameScreen.draw').toString().indexOf('this.cgCaption') >= 0 &&
+        g('GameScreen.draw').toString().indexOf('textClip') >= 0);
+}
+
 /* ---------------- 主流程 ---------------- */
 
 async function main() {
@@ -1157,6 +1223,7 @@ async function main() {
     await suiteVolumes();
     await suiteStoryStore();
     await suiteMainWiring();
+    suiteTextClip();
 
     /* 收尾:再给微任务/定时器一次机会,让潜在异步失败暴露 */
     await flush();

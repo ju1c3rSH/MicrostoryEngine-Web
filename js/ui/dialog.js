@@ -83,7 +83,7 @@ const Dialog = {
         /* 标题 */
         Draw.textCenter(this.title, this.boxX, this.boxY + 6, DIALOG_BOX_W, CLR_SPEAKER);
 
-        /* 选项 */
+        /* 选项（label 本身无裁剪：长文本会漫出框外，此处按槽位裁剪） */
         for (let i = 0; i < this.optionCount; i++) {
             let x, y, w, h, align;
             if (this.layout === DIALOG_HORIZONTAL) {
@@ -103,9 +103,9 @@ const Dialog = {
             const text = (i === this.sel ? '>' : ' ') + this.optText[i];
             const color = i === this.sel ? CLR_CHOICE_S : CLR_TEXT;
             if (align === 'center') {
-                Draw.textCenter(text, x, y, w, color);
+                Draw.textCenterClip(text, x, y, w, color);
             } else {
-                Draw.text(text, x, y, color);
+                Draw.textClip(text, x, y, w, color);
             }
         }
     },

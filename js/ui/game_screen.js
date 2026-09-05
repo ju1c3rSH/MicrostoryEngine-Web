@@ -368,7 +368,7 @@ const GameScreen = {
             Draw.fillRect(0, SCREEN_H - 2, SCREEN_W, 2, 0x152205);
             Draw.fillRect(0, 0, 2, SCREEN_H, 0x152205);
             Draw.fillRect(SCREEN_W - 2, 0, 2, SCREEN_H, 0x152205);
-            Draw.text(this.cgCaption, PANEL_PAD, SCREEN_H - 14, CLR_TEXT);
+            Draw.textClip(this.cgCaption, PANEL_PAD, SCREEN_H - 14, SCREEN_W - PANEL_PAD * 2, CLR_TEXT);
             return;
         }
 
@@ -393,7 +393,7 @@ const GameScreen = {
         Draw.textCenter(spkText, 0, 1, SCREEN_W, CLR_CHOICE_T);
 
         if (this.state === GS_CHOICE) {
-            /* 选项：溢出文字选中时循环滚动（对应 LVGL SCROLL_CIRCULAR，8s 一个来回），未选中裁剪 */
+            /* 选项：溢出文字选中时恒速循环滚动（LVGL SCROLL_CIRCULAR 行为：两端停顿+匀速），未选中裁剪 */
             const vw = TEXT_W - 8;
             const clipX = PANEL_PAD + 4;
             for (let i = 0; i < this.choiceCnt; i++) {
@@ -404,12 +404,7 @@ const GameScreen = {
                 if (i === this.selChoice) {
                     Draw.fillRect(PANEL_PAD, y, TEXT_W, CHOICE_H, 0x000000);
                     let off = 0;
-                    if (over) {
-                        const span = tw - vw;
-                        const phase = (T.get() - (this.choiceChangeMs || 0)) % 8000;
-                        const t = phase < 4000 ? phase / 4000 : (8000 - phase) / 4000;
-                        off = -Math.round(t * span);
-                    }
+                    if (over) off = Draw.marqueeOffset(tw - vw, T.get() - (this.choiceChangeMs || 0));
                     Draw.textScrolled(text, clipX, y + 1, vw, off, 0xFFFFFF);
                 } else {
                     Draw.textScrolled(text, clipX, y + 1, vw, 0, 0x000000);
@@ -447,7 +442,7 @@ const GameScreen = {
 
         const propLines = this._updatePauseProps();
         for (let i = 0; i < propLines.length; i++) {
-            Draw.text(propLines[i], PANEL_PAD, 22 + i * 14, CLR_TEXT);
+            Draw.textClip(propLines[i], PANEL_PAD, 22 + i * 14, SCREEN_W - PANEL_PAD * 2, CLR_TEXT);
         }
 
         for (let i = 0; i < 4; i++) {

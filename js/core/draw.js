@@ -107,8 +107,42 @@ const Draw = {
         this.text(str, x + w / 2, y, color, { align: 'center', size });
     },
 
+    /* 单行裁剪文本（对应 LVGL LONG_CLIP）：超出 [x, x+w] 的部分不绘制，
+     * 标题/设置条目/对话框选项/字幕/关于/暂停等固定槽位用它，禁止漫出框外。 */
+    textClip(str, x, y, w, color, opts = {}) {
+        const c = this.ctx;
+        const size = opts.size || 14;
+        c.font = size + 'px ' + this.fontName;
+        c.fillStyle = hexColor(color);
+        c.textBaseline = 'top';
+        c.textAlign = 'left';
+        c.save();
+        c.beginPath();
+        c.rect(Math.floor(x), Math.floor(y), Math.ceil(w), size + 4);
+        c.clip();
+        c.fillText(str, x, y);
+        c.restore();
+    },
+
+    /* 居中单行裁剪文本（裁剪窗 [x, x+w]，文字居中于窗内） */
+    textCenterClip(str, x, y, w, color, size) {
+        const c = this.ctx;
+        const s = size || 14;
+        c.font = s + 'px ' + this.fontName;
+        c.fillStyle = hexColor(color);
+        c.textBaseline = 'top';
+        c.textAlign = 'center';
+        c.save();
+        c.beginPath();
+        c.rect(Math.floor(x), Math.floor(y), Math.ceil(w), s + 4);
+        c.clip();
+        c.fillText(str, x + w / 2, y);
+        c.restore();
+    },
+
     /* 文字在固定窗口 [clipX, clipX+w] 内绘制，offset 为文字起点相对 clipX 的偏移。
-     * 裁剪窗口固定不随文字移动，滚动显示时窗口始终停留在原地（对应 LVGL CLIP/SCROLL_CIRCULAR）。 */
+     * 裁剪窗口固定不随文字移动，滚动显示时窗口始终停留在原地（对应 LVGL CLIP/SCROLL_CIRCULAR）。
+     * 恒速跑马灯（对应 LVGL SCROLL_CIRCULAR 行为）：见 marqueeOffset，调用方只传 elapsed。 */
     textScrolled(str, clipX, y, w, offset, color, opts = {}) {
         const c = this.ctx;
         const size = opts.size || 14;
@@ -134,9 +168,25 @@ const Draw = {
         this.ctx.drawImage(img, x, y, w, h);
     },
 
+    /* 恒速循环跑马灯偏移（对应 LVGL SCROLL_CIRCULAR 行为）：
+     * 两端各停顿 dwellMs，中间以 speed px/s 恒速移动（默认 30px/s）。
+     * 返回文字起点相对窗口左边的偏移（负值或零）。elapsed 为选中后经过的毫秒。 */
+    marqueeOffset(span, elapsed, speed = 30, dwellMs = 1500) {
+        if (span <= 0) return 0;
+        const moveMs = (span / speed) * 1000;
+        const period = dwellMs * 2 + moveMs * 2;
+        let t = elapsed % period;
+        if (t < dwellMs) return 0;
+        t -= dwellMs;
+        if (t < moveMs) return -Math.round((t / moveMs) * span);
+        t -= moveMs;
+        if (t < dwellMs) return -span;
+        t -= dwellMs;
+        return -span + Math.round((t / moveMs) * span);
+    },
+
     /* 文本自动换行（近似 LVGL WRAP）：按宽度断行 */
-    wrapText(text, maxW, size = 14) {
-        const lines = [];
+    wrapText(text, maxW, size = 14) {        const lines = [];
         let line = '';
         for (const ch of text) {
             const t = line + ch;

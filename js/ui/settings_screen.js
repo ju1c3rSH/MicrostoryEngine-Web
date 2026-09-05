@@ -348,16 +348,17 @@ const SettingsScreen = {
             return;
         }
 
-        /* 条目列表（带滚动） */
+        /* 条目列表（带滚动，单行溢出裁剪对应 label 默认 CLIP） */
         const start = this.scrollOfs;
         const end = Math.min(start + VISIBLE_ROWS, this.itemCount);
         for (let i = start; i < end; i++) {
-            Draw.text(this.lines[i], PANEL_PAD, 24 + (i - start) * 14, CLR_TEXT);
+            Draw.textClip(this.lines[i], PANEL_PAD, 24 + (i - start) * 14,
+                          SCREEN_W - PANEL_PAD * 2, CLR_TEXT);
         }
 
         const hint = this.tab === TAB_INSTALLED
             ? '←→ 切换标签  ↑↓ 选择  A 删除  B 返回'
             : '←→ 切换标签  ↑↓ 选择  A 导入  B 返回';
-        Draw.textCenter(hint, 0, SCREEN_H - 20, SCREEN_W, CLR_SPEAKER);
+        Draw.textCenterClip(hint, 0, SCREEN_H - 20, SCREEN_W, CLR_SPEAKER, 12);
     },
 };
