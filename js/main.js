@@ -327,6 +327,9 @@ function frame(now) {
     GameScreen.tick();
     TitleScreen.tick();
 
+    /* 机身状态灯：单帧轮询（持续状态，与 Dialog/notify 瞬时提示互补） */
+    if (typeof SysLed !== 'undefined') SysLed.tick();
+
     drawFrame();
     requestAnimationFrame(frame);
 }
@@ -405,6 +408,17 @@ async function boot() {
     const canvas = document.getElementById('screen');
     Draw.attach(canvas);
     Input.init(canvas);
+    if (typeof SysLed !== 'undefined') SysLed.init();
+
+    /* 未知异步错误兜底：复用 ACT_ERROR 链路（灯变琥珀 + 弹窗，任意键回标题后自动回绿） */
+    window.addEventListener('unhandledrejection', e => {
+        try {
+            if (typeof Eng !== 'undefined') Eng.action = ACT_ERROR;
+            if (typeof Dialog !== 'undefined' && !Dialog.isActive()) {
+                Dialog.show('系统错误', '发生了未知错误|任意键返回标题', DIALOG_VERTICAL);
+            }
+        } catch (_) { /* ignore */ }
+    });
 
     /* 屏幕整数倍适配 */
     fitScreen();

@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>MicroStory</title>
-<link rel="stylesheet" href="css/shell.css?v=1">
+<link rel="stylesheet" href="css/shell.css?v=2">
 </head>
 <body>
 <div id="cabinet">
   <div id="cab-top">
-    <span id="brand-dot" aria-hidden="true"></span>
-    <span id="brand">MICROSTORY</span>
+    <span id="sys-led" class="sys-led-idle" role="status" aria-label="状态指示灯" data-state="idle"></span>
+    <span id="brand">Microstory Engine</span>
     <span id="sys-btns">
       <button id="pad-toggle" class="sys-btn" aria-label="切换手柄" aria-pressed="true" title="隐藏手柄">隐</button>
       <button id="mute-btn" class="sys-btn" aria-label="切换静音" title="静音">音</button>
@@ -51,6 +51,7 @@
 <script src="js/games/game_fox.js"></script>
 <script src="js/games/game_gomoku.js"></script>
 <script src="js/games/game_othello.js"></script>
+<script src="js/ui/sys_led.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

@@ -979,6 +979,45 @@ async function suiteMainWiring() {
     check('GREET_RESET_SEQ 匹配返回 true', greetMatched === true);
     check('标题页显示「问候已重置」提示', TitleScreen.toastText === '问候已重置',
         '实际 ' + JSON.stringify(TitleScreen.toastText));
+
+    /* —— 机身状态灯 SysLed（三态 + 扩展口） —— */
+    check('SysLed 已随 bundle 加载', gexec('typeof SysLed') === 'object');
+    check('frame() 主循环已接 SysLed.tick()', g('frame').toString().indexOf('SysLed') >= 0);
+    check('boot() 已接 SysLed.init() 与 unhandledrejection 兜底',
+        g('boot').toString().indexOf('SysLed') >= 0 &&
+        g('boot').toString().indexOf('unhandledrejection') >= 0);
+
+    /* 无灯节点时 init/tick 不抛（垫片未预置 sys-led，覆盖早退分支） */
+    const ledNoEl = gexec('(function () { try { SysLed._el = null; SysLed.init(); SysLed.tick(); return "ok"; } catch (e) { return "ERR:" + e; } })()');
+    check('无灯节点时 SysLed.init/tick 不抛异常', ledNoEl === 'ok', String(ledNoEl));
+
+    /* 测试内现搭 #sys-led（垫片 id 自动登记，无需改 shims） */
+    const ledMounted = gexec('(function () { var el = document.createElement("span"); el.id = "sys-led"; el.className = "sys-led-idle"; document.body.appendChild(el); return document.getElementById("sys-led") === el; })()');
+    check('测试内可现搭 #sys-led 节点', ledMounted === true);
+
+    gexec('Dialog.hide(); ScreenManager.switch(SCR_TITLE); Eng.action = ACT_RUNNING; SysLed.init();');
+    check('标题画面灯为待机绿 idle', gexec('SysLed.cur()') === 'idle', '实际 ' + gexec('SysLed.cur()'));
+    check('灯节点 class 切到 sys-led-idle',
+        gexec('document.getElementById("sys-led").className') === 'sys-led-idle');
+    gexec('ScreenManager.switch(SCR_GAME); SysLed.tick();');
+    check('游戏画面灯为红 play', gexec('SysLed.cur()') === 'play', '实际 ' + gexec('SysLed.cur()'));
+    check('灯节点 class 切到 sys-led-play',
+        gexec('document.getElementById("sys-led").className') === 'sys-led-play');
+    gexec('Eng.action = ACT_ERROR; SysLed.tick();');
+    check('ACT_ERROR 灯为琥珀 error（优先于 play）', gexec('SysLed.cur()') === 'error',
+        '实际 ' + gexec('SysLed.cur()'));
+    gexec('Eng.action = ACT_RUNNING; ScreenManager.switch(SCR_TITLE); SysLed.tick();');
+    check('回标题后灯回到 idle', gexec('SysLed.cur()') === 'idle');
+
+    /* 扩展口：注册自定义状态即时生效，未知状态忽略 */
+    gexec('SysLed.register("custom", "#123456"); SysLed.set("custom");');
+    check('register+set 自定义状态生效',
+        gexec('SysLed.cur()') === 'custom' &&
+        gexec('document.getElementById("sys-led").getAttribute("data-state")') === 'custom' &&
+        gexec('document.getElementById("sys-led").style.background') === '#123456');
+    gexec('SysLed.set("nope-x");');
+    check('set 未知状态被忽略', gexec('SysLed.cur()') === 'custom');
+    gexec('SysLed.set("idle"); Eng.action = ACT_RUNNING; ScreenManager.switch(SCR_TITLE); Dialog.hide();');
 }
 
 /* ---------------- 主流程 ---------------- */

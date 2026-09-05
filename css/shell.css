@@ -47,19 +47,24 @@ body {
   gap: 8px;
 }
 
-#brand-dot {
+/* 机身状态灯：三态纯色常亮（直角实色无动画，仅切 background） */
+#sys-led {
   width: 10px;
   height: 10px;
   flex-shrink: 0;
-  background: #B33A3A;
+  background: #7DA520;
   border: 2px solid #152205;
+  border-radius: 0;
 }
+.sys-led-idle { background: #7DA520; }
+.sys-led-play { background: #B33A3A; }
+.sys-led-error { background: #C8A838; }
 
 #brand {
   flex: 1;
   color: #152205;
   font: bold 14px/1 'MiSans', 'Microsoft YaHei', sans-serif;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   white-space: nowrap;
   overflow: hidden;
 }
