@@ -24,6 +24,8 @@ const Draw = {
     setPixelScale(px) {
         this.pixelScale = Math.max(1, Math.floor(px));
         if (this.ctx) {
+            /* fitScreen 重置 canvas.width/height 会清空 ctx 状态（含 smoothing），此处一并恢复 */
+            this.ctx.imageSmoothingEnabled = false;
             this.ctx.setTransform(this.pixelScale, 0, 0, this.pixelScale, 0, 0);
         }
     },

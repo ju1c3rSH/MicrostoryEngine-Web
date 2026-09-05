@@ -140,13 +140,14 @@ function decodeCg(rleBytes) {
 
     if (rleBytes.length < 5) return null;
     if (rleBytes[0] === 0) {
-        /* raw RGB565 */
+        /* raw RGB565：[0] 为格式字节，像素自 [1] 起 */
         const n = Math.min(rleBytes.length - 1, CG_W * CG_H * 2);
-        for (let i = 0; i + 1 < n; i += 2) put(rleBytes[i] | (rleBytes[i + 1] << 8));
+        for (let i = 0; i + 1 < n; i += 2) put(rleBytes[1 + i] | (rleBytes[1 + i + 1] << 8));
     } else {
-        /* RLE: [count:u16][pixel:u16] 对 */
+        /* RLE: [count:u16][pixel:u16] 对；out 为 RGBA 字节下标，满帧 CG_W*CG_H*4。
+         * 输入边界由 ip + 4 <= rleBytes.length 把守，输出上限只按满帧钳制。 */
         let ip = 1;
-        const end = Math.min(rleBytes.length, CG_W * CG_H * 2);
+        const end = CG_W * CG_H * 4;
         while (ip + 4 <= rleBytes.length && out < end) {
             const count = rleBytes[ip] | (rleBytes[ip + 1] << 8);
             const pixel = rleBytes[ip + 2] | (rleBytes[ip + 3] << 8);

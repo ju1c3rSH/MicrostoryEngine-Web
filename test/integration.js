@@ -10,6 +10,7 @@
  * 覆盖:
  *   1. 启动冒烟(boot / ScreenManager / 问候对话框 / MiniGame 注册)
  *   2. 故事数据与解析(13 个 .story 头字段)
+ *   2b. 图像解码回归(decodeCg RLE/RAW 合成 + 全部真实 CG 全帧非透明)
  *   3. 可见故事 + 彩蛋:easter_egg 引擎全流程(点击/选项/小游戏,3 种选择策略)
  *   4. 9 个小游戏独立生命周期(按键/步进/draw/结束/得分)
  *   5. Persist:存档往返/损坏/失效/通关/问候/静音/音量/备份导出导入
@@ -258,6 +259,123 @@ async function suiteStories() {
 
 /* ---------------- 套件 2:故事引擎全流程 ---------------- */
 
+/* ---------------- 图像解码回归(decodeCg 显示不全) ----------------
+ *
+ * 根因曾是 story.js decodeCg RLE 分支输出上限把“压缩流字节数/RGB565 字节数”
+ * 混进 RGBA 输出游标，只解出顶部十几行。用例拦截离屏 canvas 的 putImageData
+ * 捕获像素做断言（垫片 createImageData 返回真实 Uint8ClampedArray，零改动）。
+ */
+
+function captureCgPixels(rle) {
+    const lit = '[' + Array.from(rle).join(',') + ']';
+    return gexec(`(function () {
+        const bytes = new Uint8Array(${lit});
+        const doc = document;
+        const origCreate = doc.createElement;
+        let pixels = null, w = 0, h = 0;
+        doc.createElement = function (tag) {
+            const el = origCreate.call(doc, tag);
+            if (tag === 'canvas') {
+                const ctx = el.getContext('2d');
+                const origPut = ctx.putImageData.bind(ctx);
+                ctx.putImageData = function (img, x, y) {
+                    pixels = Array.from(img.data);
+                    w = img.width; h = img.height;
+                    return origPut(img, x, y);
+                };
+            }
+            return el;
+        };
+        let canvas = null;
+        try { canvas = decodeCg(bytes); }
+        finally { doc.createElement = origCreate; }
+        return { canvas: canvas ? { width: canvas.width, height: canvas.height } : null, pixels, w, h };
+    })()`);
+}
+
+function suiteImageDecode() {
+    header('图像解码(decodeCg RLE/RAW 全帧回归)');
+
+    /* RLE 合成：单 run 填满 160×128 纯红 0xF800。旧上限 end=min(rleLen,40960)
+     * 只解出约 rleLen/4 像素（本例 5 字节 → 1 像素），右下必黑。 */
+    const rleRed = new Uint8Array([1, 0x00, 0x50, 0x00, 0xF8]);
+    const red = captureCgPixels(rleRed);
+    check('RLE 全红单 run 返回 160×128 canvas',
+        !!red.canvas && red.canvas.width === 160 && red.canvas.height === 128);
+    check('RLE 全红左上像素为红', !!red.pixels &&
+        red.pixels[0] === 248 && red.pixels[1] === 0 && red.pixels[2] === 0 && red.pixels[3] === 255,
+        red.pixels ? red.pixels.slice(0, 4).join(',') : '无像素');
+    const rb = red.pixels ? red.pixels.length - 4 : 0;
+    check('RLE 全红右下像素为红（旧 bug 只解顶部）', !!red.pixels &&
+        red.pixels[rb] === 248 && red.pixels[rb + 1] === 0 && red.pixels[rb + 2] === 0 && red.pixels[rb + 3] === 255,
+        red.pixels ? red.pixels.slice(rb, rb + 4).join(',') : '无像素');
+
+    /* RAW 合成：flag=0 + 20480 个 0x07E0 纯绿。旧下标从 0 读把格式字节当像素，
+     * 首像素必错位。 */
+    const rawGreen = new Uint8Array(1 + 20480 * 2);
+    rawGreen[0] = 0;
+    for (let i = 0; i < 20480; i++) { rawGreen[1 + i * 2] = 0xE0; rawGreen[1 + i * 2 + 1] = 0x07; }
+    const green = captureCgPixels(rawGreen);
+    check('RAW 全绿返回 160×128 canvas',
+        !!green.canvas && green.canvas.width === 160 && green.canvas.height === 128);
+    check('RAW 全绿首像素为绿（旧 bug 错位 1 字节）', !!green.pixels &&
+        green.pixels[0] === 0 && green.pixels[1] === 252 && green.pixels[2] === 0 && green.pixels[3] === 255,
+        green.pixels ? green.pixels.slice(0, 4).join(',') : '无像素');
+    const gb = green.pixels ? green.pixels.length - 4 : 0;
+    check('RAW 全绿末像素为绿', !!green.pixels &&
+        green.pixels[gb] === 0 && green.pixels[gb + 1] === 252 && green.pixels[gb + 2] === 0 && green.pixels[gb + 3] === 255,
+        green.pixels ? green.pixels.slice(gb, gb + 4).join(',') : '无像素');
+
+    /* 坏输入保持 null */
+    const bad = gexec('decodeCg(new Uint8Array([1, 2, 3]))');
+    check('过短输入返回 null', bad === null);
+}
+
+    /* 真实数据 CG 全帧断言（跑在引擎全流程之后，复用 loadAll 缓存，垫片零改动）。
+ * 拦截 putImageData：逐故事对每张 CG 解码并断言全帧 alpha=255（旧 bug 下半透明）。 */
+function checkRealCgFullFrame(stories) {
+    header('真实故事 CG 全帧（全部 .story 解码不断行）');
+    let checked = 0;
+    const bad = [];
+    for (const st of stories) {
+        if (st.fileName === 'easter_egg.story') continue;
+        const cgList = st.cg || [];
+        for (let ci = 0; ci < cgList.length; ci++) {
+            const lit = '[' + Array.from(cgList[ci].rle).join(',') + ']';
+            const px = gexec(`(function () {
+                const bytes = new Uint8Array(${lit});
+                const doc = document;
+                const origCreate = doc.createElement;
+                let pixels = null;
+                doc.createElement = function (tag) {
+                    const el = origCreate.call(doc, tag);
+                    if (tag === 'canvas') {
+                        const ctx = el.getContext('2d');
+                        const origPut = ctx.putImageData.bind(ctx);
+                        ctx.putImageData = function (img, x, y) {
+                            pixels = Array.from(img.data);
+                            return origPut(img, x, y);
+                        };
+                    }
+                    return el;
+                };
+                try { decodeCg(bytes); }
+                finally { doc.createElement = origCreate; }
+                return pixels;
+            })()`);
+            checked++;
+            if (!px || px.length !== 160 * 128 * 4) {
+                bad.push(st.fileName + '#' + ci + ': 像素长度异常');
+                continue;
+            }
+            let transparent = 0;
+            for (let i = 3; i < px.length; i += 4) if (px[i] !== 255) transparent++;
+            if (transparent > 0) bad.push(st.fileName + '#' + ci + ': ' + transparent + ' 像素透明');
+        }
+    }
+    check('全部真实 CG(' + checked + ' 张)全帧非透明', bad.length === 0, bad.join(' | '));
+}
+
 /* 模拟 main.js handleMinigame 的「小游戏完成」分支接线 */
 function simMinigameCompletion() {
     if (!MiniGame.isActive() && !MiniGame.isFinished()) {
@@ -412,6 +530,8 @@ async function suiteEngineRuns() {
 
     info('全部故事中小游戏出现次数(每次一条等待):' + totalMinigames.count);
     check('小游戏调度后 MiniGame 未残留激活状态', MiniGame.isActive() === false);
+
+    checkRealCgFullFrame(stories);
 }
 
 /* ---------------- 套件 3:9 个小游戏独立生命周期 ---------------- */
@@ -1028,8 +1148,9 @@ async function main() {
         ' · 脚本数 ' + scriptPaths.length + ' · bundle ' + (bundle.length / 1024).toFixed(0) + 'KB');
 
     await suiteBoot();
-    suiteStories();
-    suiteEngineRuns();
+    await suiteStories();
+    suiteImageDecode();
+    await suiteEngineRuns();
     suiteMinigames();
     suitePersist();
     suiteBackup();
