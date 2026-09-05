@@ -368,12 +368,11 @@ function fitScreen() {
     const canvas = document.getElementById('screen');
     if (!canvas) return;
 
-    // 固定手柄常驻：只要可见就预留 168px 底部空间（144 手柄 + 外边距），隐藏时不预留
+    // 整机外壳：顶栏 + 屏幕 + 机身按键区 + 提示行纵向排布，按整机高度算整数倍缩放
+    // 预留：顶栏/边框约 94（含机身上下内边距与提示行），按键区可见时再留 166（144 手柄 + 行内边距）
     const padVisible = (typeof Input !== 'undefined' && typeof Input.isPadVisible === 'function') ? Input.isPadVisible() : true;
-    const vpadSpace = padVisible ? 168 : 0;
-    /* 顶部留白 12 + 底部提示文字约 30 */
-    const availW = Math.max(0, window.innerWidth - 24);
-    const availH = Math.max(0, window.innerHeight - 42 - vpadSpace);
+    const availW = Math.max(0, window.innerWidth - 32);
+    const availH = Math.max(0, window.innerHeight - 94 - (padVisible ? 166 : 0));
 
     let scale = Math.floor(Math.min(availW / SCREEN_W, availH / SCREEN_H));
     if (scale < 1) scale = 1;

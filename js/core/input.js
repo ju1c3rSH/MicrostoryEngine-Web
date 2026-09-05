@@ -5,8 +5,8 @@
  *   A（ENTER）       → Enter / Space / Z / 桌面单击 / 触屏右半区 / A 按钮
  *   B（ESC）         → Esc / Backspace / X / B 按钮
  *
- * 固定式像素手柄（重构自 html5-virtual-game-controller 固定分区 + bobboteck/JoyStick 阈值思想）：
- *   - 非浮动：左右分区常驻显示（#touch-zone flex 布局），不再随触点动态出现
+ * 机身一体手柄（重构自 html5-virtual-game-controller 固定分区 + bobboteck/JoyStick 阈值思想）：
+ *   - 非浮动：#touch-zone 挂载在机身 #cab-controls 内，左右分区随整机排布，不再悬浮于页面底部
  *   - 左区 144×144 D-pad：以中心为原点，滑动 ≥16px 四向判定，支持跨键滑动切向
  *   - 右区 A/B：固定斜排，支持多指同时操作
  *   - 方向键 120ms 连发，手柄始终显示，可通过右上角显隐开关切换（持久化到 localStorage）
@@ -100,6 +100,9 @@ const Input = {
     _applyPadVisible(animate) {
         if (!this._zone) return;
         this._zone.classList.toggle('hidden-pad', !this._padVisible);
+        /* 机身按键区整行折叠，屏幕随 fitScreen 重算放大 */
+        const host = document.getElementById('cab-controls');
+        if (host) host.classList.toggle('controls-hidden', !this._padVisible);
         if (this._padToggleUpdate) this._padToggleUpdate();
         // 访达样式：fitScreen 会根据是否显示预留底部空间
         document.documentElement.classList.toggle('pad-hidden', !this._padVisible);
@@ -153,7 +156,9 @@ const Input = {
 
         zone.appendChild(padLeft);
         zone.appendChild(padRight);
-        document.body.appendChild(zone);
+        /* 挂载到机身按键区（整机外壳的一部分）；无外壳结构时回退到 body（无头测试） */
+        const host = document.getElementById('cab-controls');
+        (host || document.body).appendChild(zone);
         this._zone = zone;
 
         // 统一用 pointer 事件，支持多指 + 滑动切向（阈值 16px 思路来自 bobboteck/JoyStick）

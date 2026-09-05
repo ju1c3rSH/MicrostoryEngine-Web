@@ -4,15 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>MicroStory</title>
-<link rel="stylesheet" href="css/style.css?v=6">
+<link rel="stylesheet" href="css/shell.css?v=1">
 </head>
 <body>
-<div id="game-wrap">
-  <canvas id="screen" width="160" height="128"></canvas>
+<div id="cabinet">
+  <div id="cab-top">
+    <span id="brand-dot" aria-hidden="true"></span>
+    <span id="brand">MICROSTORY</span>
+    <span id="sys-btns">
+      <button id="pad-toggle" class="sys-btn" aria-label="切换手柄" aria-pressed="true" title="隐藏手柄">隐</button>
+      <button id="mute-btn" class="sys-btn" aria-label="切换静音" title="静音">音</button>
+    </span>
+  </div>
+  <div id="screen-bezel">
+    <div id="game-wrap">
+      <canvas id="screen" width="160" height="128"></canvas>
+    </div>
+  </div>
+  <div id="cab-controls"></div>
+  <p id="hint">WASD/方向键移动 &middot; Enter/Z/单击/A键确认 &middot; Esc/X/B键返回</p>
 </div>
-<button id="pad-toggle" class="pad-toggle" aria-label="切换手柄" aria-pressed="true" title="隐藏手柄">隐</button>
-<button id="mute-btn" class="mute-btn" aria-label="切换静音">音</button>
-<p id="hint">WASD/方向键移动 &middot; Enter/Z/单击/A键确认 &middot; Esc/X/B键返回</p>
 
 <script src="js/core/util.js"></script>
 <script src="js/core/draw.js"></script>

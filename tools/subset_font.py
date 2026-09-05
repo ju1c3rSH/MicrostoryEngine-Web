@@ -6,7 +6,7 @@ subset_font.py - 生成 font/MiSans-Subset.ttf（MiSans 子集，可重复执行
 输出为 TTF 格式（非 woff2），保证 file:// 下 @font-face 直接加载兼容。
 
 字符集取以下来源的并集：
-  (a) js/**/*.js、index.html、css/style.css 中出现的全部非 ASCII 字符
+  (a) js/**/*.js、index.html、css/shell.css 中出现的全部非 ASCII 字符
   (b) 解析 stories/*.story（复刻 js/core/story.js 的 parseStory 逻辑）提取的
       全部文本字符：标题/副标题/字符串表/属性名/CG 名（UTF-8，\0 分隔）
   (c) ASCII 可打印区 0x20-0x7E
@@ -152,10 +152,10 @@ def parse_story(path, warnings):
 
 
 def collect_source_chars(warnings):
-    """(a) js/**/*.js + index.html + css/style.css 中的非 ASCII 字符。"""
+    """(a) js/**/*.js + index.html + css/shell.css 中的非 ASCII 字符。"""
     files = sorted(glob.glob(os.path.join(ROOT, "js", "**", "*.js"), recursive=True))
     files.append(os.path.join(ROOT, "index.html"))
-    files.append(os.path.join(ROOT, "css", "style.css"))
+    files.append(os.path.join(ROOT, "css", "shell.css"))
     chars = set()
     for f in files:
         text = open(f, encoding="utf-8").read()

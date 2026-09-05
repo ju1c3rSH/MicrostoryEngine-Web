@@ -1,0 +1,278 @@
+@font-face {
+  font-family: 'MiSans';
+  src: url('../font/MiSans-Subset.ttf') format('truetype');
+  font-weight: normal;
+  font-display: swap;
+}
+
+/* 整机外壳:页面本身就是一台掌机,屏幕嵌在机身里,按键长在机身上。
+ * 色板与 160x128 游戏内画面一致(见 js/core/util.js):
+ * 底 #9BBD30 面板 #A8CA38 墨绿 #152205 边框 #7DA520,直角实色无动画。 */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: #0d1205;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
+/* ---------- 机身 ---------- */
+#cabinet {
+  background: #9BBD30;
+  border: 4px solid #152205;
+  box-shadow: 6px 6px 0 #060a02;
+  padding: 10px 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 16px);
+}
+
+/* ---------- 顶栏:电源灯 + 品牌 + 系统小键 ---------- */
+#cab-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#brand-dot {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  background: #B33A3A;
+  border: 2px solid #152205;
+}
+
+#brand {
+  flex: 1;
+  color: #152205;
+  font: bold 14px/1 'MiSans', 'Microsoft YaHei', sans-serif;
+  letter-spacing: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+#sys-btns {
+  display: flex;
+  gap: 6px;
+}
+
+/* 系统小键:嵌在顶栏里,不再悬浮于页面角落 */
+.sys-btn {
+  min-width: 30px;
+  height: 26px;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: bold 13px/1 'MiSans', 'Microsoft YaHei', sans-serif;
+  background: #9BBD30;
+  border: 2px solid #152205;
+  box-shadow: 2px 2px 0 #060a02;
+  border-radius: 0;
+  color: #152205;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.sys-btn.muted, .sys-btn.off {
+  background: #152205;
+  color: #9BBD30;
+}
+.sys-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+/* ---------- 屏幕框:深色 bezel 把画面嵌进机身 ---------- */
+#screen-bezel {
+  background: #152205;
+  border: 3px solid #060a02;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#game-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+#screen {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  -ms-interpolation-mode: nearest-neighbor;
+  background: #9BBD30;
+  width: auto;
+  height: auto;
+  touch-action: none;
+}
+
+/* ---------- 机身按键区:手柄挂载在这里,随整机排布 ---------- */
+#cab-controls:empty {
+  display: none;
+}
+#cab-controls.controls-hidden {
+  display: none;
+}
+
+#touch-zone {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 2px 2px 0;
+  pointer-events: none;
+}
+/* 显隐直接切,和游戏内界面切换一致 */
+#touch-zone.hidden-pad {
+  display: none;
+}
+
+/* 左右容器:允许按键接收事件,中间镂空 */
+.pad-side {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-end;
+}
+
+/* ---- D-pad 十字:144x144,四键贴合,中间垫块 ---- */
+#dpad {
+  position: relative;
+  width: 144px;
+  height: 144px;
+  flex-shrink: 0;
+  touch-action: none;
+}
+
+.dpad-key {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #152205;
+  border: 3px solid #060a02;
+  border-radius: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+.dpad-up { left: 48px; top: 0; border-bottom: none; }
+.dpad-left { left: 0; top: 48px; border-right: none; }
+.dpad-center { left: 48px; top: 48px; background: #060a02; pointer-events: none; }
+.dpad-right { left: 96px; top: 48px; border-left: none; }
+.dpad-down { left: 48px; top: 96px; border-top: none; }
+
+.dpad-key::before {
+  content: '';
+  width: 0;
+  height: 0;
+}
+.dpad-up::before { border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 14px solid #9BBD30; }
+.dpad-down::before { border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 14px solid #9BBD30; }
+.dpad-left::before { border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-right: 14px solid #9BBD30; }
+.dpad-right::before { border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-left: 14px solid #9BBD30; }
+
+/* 按下反色:浅底 + 深箭头(与游戏内选中行同理) */
+.dpad-key.active {
+  background: #9BBD30;
+}
+.dpad-up.active::before { border-bottom-color: #152205; }
+.dpad-down.active::before { border-top-color: #152205; }
+.dpad-left.active::before { border-right-color: #152205; }
+.dpad-right.active::before { border-left-color: #152205; }
+
+/* ---- 右侧 A/B:墨绿方块,掌机斜排(B 高 A 低) ---- */
+.pad-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  padding-bottom: 6px;
+}
+
+.vbtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #152205;
+  border: 3px solid #060a02;
+  box-shadow: 3px 3px 0 #060a02;
+  border-radius: 0;
+  color: #9BBD30;
+  font: bold 22px/1 'MiSans', sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  cursor: pointer;
+}
+.vbtn-a {
+  width: 62px; height: 62px;
+  font-size: 24px;
+}
+.vbtn-b {
+  width: 52px; height: 52px;
+  font-size: 20px;
+  margin-bottom: 18px;
+}
+/* B 在左上,A 在右下,形成菱形手感 */
+.pad-actions .vbtn-b { order: 1; }
+.pad-actions .vbtn-a { order: 2; }
+
+.vbtn.active, .vbtn:active {
+  background: #9BBD30;
+  color: #152205;
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #060a02;
+}
+
+/* ---------- 机身底部提示行 ---------- */
+#hint {
+  text-align: center;
+  color: #152205;
+  font: 12px/1.6 'MiSans', 'Microsoft YaHei', sans-serif;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* 窄屏适配:等比缩小手柄,机身内边距收紧 */
+@media (max-width: 420px) {
+  #cabinet { padding: 8px 8px 6px; }
+  #screen-bezel { padding: 6px; }
+  #brand { font-size: 12px; letter-spacing: 2px; }
+  #dpad { width: 126px; height: 126px; }
+  .dpad-key { width: 42px; height: 42px; }
+  .dpad-up { left: 42px; top: 0; }
+  .dpad-left { left: 0; top: 42px; }
+  .dpad-center { left: 42px; top: 42px; }
+  .dpad-right { left: 84px; top: 42px; }
+  .dpad-down { left: 42px; top: 84px; }
+  .dpad-up::before { border-left-width: 8px; border-right-width: 8px; border-bottom-width: 11px; }
+  .dpad-down::before { border-left-width: 8px; border-right-width: 8px; border-top-width: 11px; }
+  .dpad-left::before { border-top-width: 8px; border-bottom-width: 8px; border-right-width: 11px; }
+  .dpad-right::before { border-top-width: 8px; border-bottom-width: 8px; border-left-width: 11px; }
+  .vbtn-a { width: 56px; height: 56px; }
+  .vbtn-b { width: 46px; height: 46px; }
+}
+@media (max-height: 560px) {
+  #cabinet { gap: 6px; }
+  #hint { display: none; }
+}

@@ -24,7 +24,7 @@ python -m http.server 8000
 | Enter / Space / Z / 单击画面 | A（推进对话、确认、连打） |
 | Esc / Backspace / X | B（暂停菜单、小游戏退出） |
 
-触屏设备会自动显示虚拟方向键 + A/B 按钮。
+页面本身就是一台掌机：屏幕嵌在机身里，方向键 + A/B 长在屏幕下方的机身上（随整机排布，不再悬浮）；顶栏可开关手柄、切换静音。
 
 - 标题画面 Konami（↑↑↓↓←→←→ B A）→ 彩蛋故事
 - 标题页连按 **B×4** → 重置开机问候计数
@@ -64,7 +64,7 @@ python -m http.server 8000
 
 - [x] 首次交互解锁 AudioContext（点击/按键/虚拟键多入口调用 `Audio2.ensure()`）
 - [x] 震动反馈均有 `navigator.vibrate` 存在性守卫（iOS Safari 无此 API 时静默跳过）
-- [x] 虚拟方向键常驻可开关（`ms_pad_visible`），布局计算预留 168px 底部空间
+- [x] 机身一体手柄可开关（`ms_pad_visible`，`#cab-controls` 整行折叠），`fitScreen()` 按整机高度算整数倍缩放
 - [x] 整数倍像素化缩放 + `devicePixelRatio` 取整，DPR 1.25/1.5 屏幕不模糊
 - [x] 触屏单击画面 = A 键；`user-scalable=no` 禁双击缩放
 
