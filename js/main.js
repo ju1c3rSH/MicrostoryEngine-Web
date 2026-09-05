@@ -372,10 +372,10 @@ function fitScreen() {
     if (!canvas) return;
 
     // 整机外壳：顶栏 + 屏幕 + 机身按键区 + 提示行纵向排布，按整机高度算整数倍缩放
-    // 预留：顶栏/边框约 94（含机身上下内边距与提示行），按键区可见时再留 166（144 手柄 + 行内边距）
+    // 预留：顶栏/边框约 72（含机身上下内边距），按键区可见时再留 166（144 手柄 + 行内边距）
     const padVisible = (typeof Input !== 'undefined' && typeof Input.isPadVisible === 'function') ? Input.isPadVisible() : true;
     const availW = Math.max(0, window.innerWidth - 32);
-    const availH = Math.max(0, window.innerHeight - 94 - (padVisible ? 166 : 0));
+    const availH = Math.max(0, window.innerHeight - 72 - (padVisible ? 166 : 0));
 
     let scale = Math.floor(Math.min(availW / SCREEN_W, availH / SCREEN_H));
     if (scale < 1) scale = 1;

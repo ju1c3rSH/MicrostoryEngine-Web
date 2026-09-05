@@ -269,15 +269,6 @@ body {
   box-shadow: inset 3px 3px 0 #4A0F18;
 }
 
-/* ---------- 机身底部：喇叭孔 + 提示行 ---------- */
-#hint {
-  text-align: center;
-  color: #5A564A;
-  font: 12px/1.6 'MiSans', 'Microsoft YaHei', sans-serif;
-  pointer-events: none;
-  white-space: nowrap;
-  overflow: hidden;
-}
 
 /* 窄屏适配：等比缩小手柄，机身内边距收紧 */
 @media (max-width: 420px) {
@@ -298,7 +289,4 @@ body {
   .vbtn-a { width: 56px; height: 56px; }
   .vbtn-b { width: 46px; height: 46px; }
 }
-@media (max-height: 560px) {
-  #cabinet { gap: 6px; }
-  #hint { display: none; }
-}
+
