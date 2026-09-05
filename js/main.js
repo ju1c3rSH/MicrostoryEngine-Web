@@ -336,7 +336,7 @@ function frame(now) {
 function updateMuteButton(muted) {
     const btn = document.getElementById('mute-btn');
     if (!btn) return;
-    btn.textContent = muted ? '🔇' : '🔊';
+    btn.textContent = muted ? '静' : '音';
     btn.classList.toggle('muted', muted);
 }
 

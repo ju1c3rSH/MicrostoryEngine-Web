@@ -5,6 +5,9 @@
   font-display: swap;
 }
 
+/* 掌机硬像素风:与 160x128 游戏内画面同一套色板/直角/实色/无动画。
+ * 游戏内色板见 js/core/util.js:底 #9BBD30 面板 #A8CA38 墨绿 #152205 边框 #7DA520。 */
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body {
@@ -31,8 +34,8 @@ html, body {
   -ms-interpolation-mode: nearest-neighbor;
   background: #9BBD30;
   border: 4px solid #152205;
-  border-radius: 6px;
-  box-shadow: 0 0 24px rgba(0, 0, 0, 0.6);
+  border-radius: 0;
+  box-shadow: 4px 4px 0 #060a02;
   width: auto;
   height: auto;
   touch-action: none;
@@ -42,44 +45,46 @@ html, body {
   position: fixed;
   left: 0; right: 0; bottom: 6px;
   text-align: center;
-  color: #6b9a10;
+  color: #7DA520;
   font: 12px/1.6 'MiSans', 'Microsoft YaHei', sans-serif;
   pointer-events: none;
 }
 
-/* ---------- 顶部按钮 ---------- */
+/* ---------- 顶部开关:实色方块,与游戏内对话框按钮同质 ---------- */
 #mute-btn, #pad-toggle {
   position: fixed;
   top: 12px;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   z-index: 20;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  background: rgba(21, 34, 5, 0.78);
-  border: 3px solid #7DA520;
-  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.35), 0 2px 0 #152205;
-  border-radius: 10px;
-  color: #9BBD30;
+  font: bold 18px/1 'MiSans', 'Microsoft YaHei', sans-serif;
+  background: #9BBD30;
+  border: 3px solid #152205;
+  outline: 2px solid #7DA520;
+  border-radius: 0;
+  box-shadow: 3px 3px 0 #060a02;
+  color: #152205;
   cursor: pointer;
   touch-action: none;
   -webkit-user-select: none;
   user-select: none;
-  transition: transform 0.08s ease, background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
 }
 #mute-btn { right: 12px; }
-#pad-toggle { right: 64px; font-size: 18px; }
+#pad-toggle { right: 60px; }
+/* 关闭状态反色:墨绿底 + 浅字,与游戏内选中项一致 */
 #mute-btn.muted, #pad-toggle.off {
-  background: rgba(107, 154, 16, 0.85);
-  color: #152205;
+  background: #152205;
+  color: #9BBD30;
 }
 #mute-btn:active, #pad-toggle:active {
-  transform: translateY(1px) scale(0.97);
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #060a02;
 }
 
-/* ---------- 常驻像素手柄（借鉴 html5-virtual-game-controller 分区 + bobboteck/JoyStick 阈值思路，自研固定布局） ---------- */
+/* ---------- 常驻像素手柄:左右分区,直角实色 ---------- */
 
 #touch-zone {
   position: fixed;
@@ -91,151 +96,121 @@ html, body {
   gap: 12px;
   padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
   pointer-events: none;
-  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s ease;
-  will-change: transform, opacity;
 }
+/* 显隐直接切,不做滑动淡入(和游戏内界面切换一致) */
 #touch-zone.hidden-pad {
-  transform: translateY(110%);
-  opacity: 0;
+  display: none;
 }
 
-/* 左右容器：允许按键接收事件，中间镂空不遮挡 */
+/* 左右容器:允许按键接收事件,中间镂空不遮挡 */
 .pad-side {
   pointer-events: auto;
   display: flex;
   align-items: flex-end;
 }
 
-/* ---- D-pad 固定 144x144 ---- */
+/* ---- D-pad 十字:144x144,四键贴合,中间垫块 ---- */
 #dpad {
   position: relative;
   width: 144px;
   height: 144px;
   flex-shrink: 0;
-  opacity: 0.92;
-  filter: drop-shadow(0 2px 0 #152205);
   touch-action: none;
 }
 
 .dpad-key {
   position: absolute;
-  width: 46px;
-  height: 46px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(155, 189, 48, 0.88);
+  background: #9BBD30;
   border: 3px solid #152205;
-  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25), 0 2px 0 #152205;
+  border-radius: 0;
   color: #152205;
-  font: bold 20px/1 'MiSans', sans-serif;
-  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.35);
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
-  transition: transform 0.08s ease, background 0.12s ease, box-shadow 0.08s ease, filter 0.12s ease;
-  animation: padIn 0.28s ease both;
 }
-.dpad-up { left: 49px; top: 0; animation-delay: 0.02s; }
-.dpad-left { left: 0; top: 49px; animation-delay: 0.04s; }
-.dpad-center { left: 49px; top: 49px; background: rgba(168, 202, 56, 0.9); animation-delay: 0s; pointer-events: none; }
-.dpad-right { left: 98px; top: 49px; animation-delay: 0.06s; }
-.dpad-down { left: 49px; top: 98px; animation-delay: 0.08s; }
+.dpad-up { left: 48px; top: 0; border-bottom: none; }
+.dpad-left { left: 0; top: 48px; border-right: none; }
+.dpad-center { left: 48px; top: 48px; background: #7DA520; pointer-events: none; }
+.dpad-right { left: 96px; top: 48px; border-left: none; }
+.dpad-down { left: 48px; top: 96px; border-top: none; }
 
 .dpad-key::before {
   content: '';
   width: 0;
   height: 0;
-  transition: transform 0.08s ease;
 }
 .dpad-up::before { border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 14px solid #152205; }
 .dpad-down::before { border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 14px solid #152205; }
 .dpad-left::before { border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-right: 14px solid #152205; }
 .dpad-right::before { border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-left: 14px solid #152205; }
 
+/* 按下反色:墨绿底,箭头变浅(与游戏内选中行同理) */
 .dpad-key.active {
-  background: #e8f5c8;
-  box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.2), 0 1px 0 #152205;
-  transform: translateY(1px) scale(0.97);
-  filter: brightness(1.05);
+  background: #152205;
 }
-.dpad-key.active::before { transform: scale(0.92); }
-.dpad-key:active { transform: translateY(1px) scale(0.96); }
+.dpad-up.active::before { border-bottom-color: #9BBD30; }
+.dpad-down.active::before { border-top-color: #9BBD30; }
+.dpad-left.active::before { border-right-color: #9BBD30; }
+.dpad-right.active::before { border-left-color: #9BBD30; }
 
-/* ---- 右侧 A/B 固定 ---- */
+/* ---- 右侧 A/B:墨绿方块,掌机斜排(B 高 A 低) ---- */
 .pad-actions {
   display: flex;
   align-items: flex-end;
   gap: 12px;
   padding-bottom: 6px;
-  /* 掌机斜排：B 高 A 低 */
 }
 
 .vbtn {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(21, 34, 5, 0.82);
-  border: 3px solid #7DA520;
-  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.35), 0 2px 0 #152205;
+  background: #152205;
+  border: 3px solid #9BBD30;
+  outline: 2px solid #060a02;
+  border-radius: 0;
+  box-shadow: 3px 3px 0 #060a02;
   color: #9BBD30;
   font: bold 22px/1 'MiSans', sans-serif;
-  border-radius: 14px;
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
   cursor: pointer;
-  transition: transform 0.08s ease, background 0.12s ease, color 0.12s ease, box-shadow 0.08s ease, filter 0.12s ease;
-  animation: padIn 0.3s ease both;
-  will-change: transform;
 }
 .vbtn-a {
   width: 62px; height: 62px;
-  border-radius: 16px;
-  font-size: 22px;
-  animation-delay: 0.05s;
+  font-size: 24px;
 }
 .vbtn-b {
   width: 52px; height: 52px;
-  border-radius: 13px;
-  font-size: 18px;
+  font-size: 20px;
   margin-bottom: 18px;
-  animation-delay: 0.1s;
 }
-/* B 在左上，A 在右下，形成菱形手感 */
+/* B 在左上,A 在右下,形成菱形手感 */
 .pad-actions .vbtn-b { order: 1; }
 .pad-actions .vbtn-a { order: 2; }
 
 .vbtn.active, .vbtn:active {
-  background: rgba(155, 189, 48, 0.95);
+  background: #9BBD30;
   color: #152205;
-  box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.25), 0 1px 0 #152205;
-  transform: translateY(2px) scale(0.96);
-  filter: brightness(1.05);
-}
-/* 按下脉冲（借鉴 RetroArch 透明 overlay 动画） */
-.vbtn.active { animation: btnPulse 0.28s ease; }
-.dpad-key.active { animation: btnPulse 0.28s ease; }
-
-@keyframes padIn {
-  from { opacity: 0; transform: translateY(10px) scale(0.96); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-@keyframes btnPulse {
-  0% { filter: brightness(1); }
-  40% { filter: brightness(1.18); }
-  100% { filter: brightness(1.05); }
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #060a02;
 }
 
-/* 窄屏/横屏适配：保证不遮挡 160x128 画面 */
+/* 窄屏适配:等比缩小,保持贴合 */
 @media (max-width: 420px) {
   #dpad { width: 126px; height: 126px; }
-  .dpad-key { width: 40px; height: 40px; }
-  .dpad-up { left: 43px; top: 0; }
-  .dpad-left { left: 0; top: 43px; }
-  .dpad-center { left: 43px; top: 43px; }
-  .dpad-right { left: 86px; top: 43px; }
-  .dpad-down { left: 43px; top: 86px; }
+  .dpad-key { width: 42px; height: 42px; }
+  .dpad-up { left: 42px; top: 0; }
+  .dpad-left { left: 0; top: 42px; }
+  .dpad-center { left: 42px; top: 42px; }
+  .dpad-right { left: 84px; top: 42px; }
+  .dpad-down { left: 42px; top: 84px; }
   .dpad-up::before { border-left-width: 8px; border-right-width: 8px; border-bottom-width: 11px; }
   .dpad-down::before { border-left-width: 8px; border-right-width: 8px; border-top-width: 11px; }
   .dpad-left::before { border-top-width: 8px; border-bottom-width: 8px; border-right-width: 11px; }
@@ -246,10 +221,4 @@ html, body {
 @media (max-height: 560px) {
   #touch-zone { padding-top: 6px; padding-bottom: 6px; }
   #hint { display: none; }
-}
-
-/* 桌面端也常驻，但降低透明度避免喧宾夺主；hover 时提亮 */
-@media (pointer: fine) {
-  #touch-zone { opacity: 0.88; }
-  #touch-zone:hover { opacity: 1; }
 }

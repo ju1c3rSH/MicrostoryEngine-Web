@@ -9,7 +9,7 @@
  *   - 非浮动：左右分区常驻显示（#touch-zone flex 布局），不再随触点动态出现
  *   - 左区 144×144 D-pad：以中心为原点，滑动 ≥16px 四向判定，支持跨键滑动切向
  *   - 右区 A/B：固定斜排，支持多指同时操作
- *   - 方向键 120ms 连发，手柄始终显示，可通过右上角 🎮 开关显隐（持久化到 localStorage）
+ *   - 方向键 120ms 连发，手柄始终显示，可通过右上角显隐开关切换（持久化到 localStorage）
  *   - 实体手柄（Gamepad API）与键盘共存
  */
 
@@ -79,7 +79,7 @@ const Input = {
         if (!btn) return;
         const update = () => {
             btn.classList.toggle('off', !this._padVisible);
-            btn.textContent = this._padVisible ? '🎮' : '🕹️';
+            btn.textContent = this._padVisible ? '隐' : '显';
             btn.setAttribute('aria-pressed', String(this._padVisible));
             btn.title = this._padVisible ? '隐藏手柄' : '显示手柄';
         };
