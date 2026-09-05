@@ -10,3 +10,6 @@ Thumbs.db
 
 # 临时
 node_modules/
+
+# 本地开发说明（不上传）
+AGENTS.md
